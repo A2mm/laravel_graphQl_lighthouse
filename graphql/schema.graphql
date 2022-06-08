@@ -1,0 +1,104 @@
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+  posts: [Post!]! @hasMany
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: User! @belongsTo
+  comments: [Comment!]! @hasMany
+}
+
+type Comment {
+  id: ID!
+  reply: String!
+  post: Post! @belongsTo
+}
+
+type PaginatorInfo {
+  count: Int!
+  currentPage: Int!
+  firstItem: Int
+  hasMorePages: Boolean!
+  lastItem: Int
+  lastPage: Int!
+  perPage: Int!
+  total: Int!
+}
+
+type Query {
+  posts: [Post!]! @all
+  post(id: Int! @eq): Post @find
+}
+
+type Query {
+  paginate_posts: [Post!]! @paginate
+}
+
+# create post
+type Mutation{
+  createPost(
+    author_id: Int! @rules(apply: ["required", "int", "exists:users,id"])
+    title: String! @rules(apply: ["required", "min:3", "max:10"])
+    content: String! @rules(apply: ["min:5", "max:50"])
+    ): Post @create
+}
+
+# create user
+type Mutation {
+  createUser(
+    name: String!
+    email: String! @rules(apply: ["email", "unique:users"])
+    password: String! @hash @rules(apply: ["min:6"])
+  ): User @create
+}
+
+#update user
+type Mutation{
+  updateUser(
+    id: ID!
+    name: String!
+  ) : User @update @validator
+}
+
+# update post
+type Mutation{
+  updatePost(
+    id: ID!
+    author_id: ID!
+    title: String!
+    content: String!
+    ): Post @update @validator
+}
+
+# delete post
+type Mutation{
+  deletePost(
+    id: ID!
+    ): Post @delete @validator
+}
+
+
+# login
+type Mutation {
+  login(
+    email: String! 
+    password: String!
+  ): String @field(resolver: "AuthMutator@resolve")
+}
+
+type Query {
+  me: User @auth(guard: "api")
+}
+
+type Query {
+  fetchMyPosts: [Post!]! @all 
+    @field(resolver: "PostMutator@fetch_mine")
+    @middleware(checks: ["auth:api"])
+}
