@@ -1,3 +1,5 @@
+# types (models)
+
 type User {
   id: ID!
   name: String!
@@ -30,16 +32,7 @@ type PaginatorInfo {
   lastPage: Int!
   perPage: Int!
   total: Int!
-}
-
-type Query {
-  posts: [Post!]! @all
-  post(id: Int! @eq): Post @find
-}
-
-type Query {
-  paginate_posts: [Post!]! @paginate
-}
+} 
 
 # create post
 type Mutation{
@@ -82,23 +75,37 @@ type Mutation{
   deletePost(
     id: ID!
     ): Post @delete @validator
-}
+} 
 
-
-# login
 type Mutation {
-  login(
-    email: String! 
-    password: String!
-  ): String @field(resolver: "AuthMutator@resolve")
+    login(input: LoginInput @spread): AuthPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\Login@resolve")
+    refreshToken(input: RefreshTokenInput @spread): RefreshTokenPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\RefreshToken@resolve")
+    logout: LogoutResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\Logout@resolve")
+    forgotPassword(input: ForgotPasswordInput! @spread): ForgotPasswordResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\ForgotPassword@resolve")
+    updateForgottenPassword(input: NewPasswordWithCodeInput @spread): ForgotPasswordResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\ResetPassword@resolve")
+    register(input: RegisterInput @spread): RegisterResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\Register@resolve")
+    socialLogin(input: SocialLoginInput! @spread): AuthPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\SocialLogin@resolve")
+    verifyEmail(input: VerifyEmailInput! @spread): AuthPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\VerifyEmail@resolve")
+    updatePassword(input: UpdatePassword! @spread): UpdatePasswordResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\UpdatePassword@resolve") @guard(with: ["api"])
 }
 
-type Query {
-  me: User @auth(guard: "api")
-}
+
+# queries with no auth 
 
 type Query {
-  fetchMyPosts: [Post!]! @all 
-    @field(resolver: "PostMutator@fetch_mine")
-    @middleware(checks: ["auth:api"])
+  
+  posts: [Post!]! @all
+
+  post(id: Int! @eq): Post @find
+
+  paginate_posts: [Post!]! @paginate
+
+} 
+
+# queries with  auth 
+
+type Query {
+
+  paginate_posts_auth: [Post!]! @guard(with: ["api"]) @paginate(type: "paginator" model: "App\\Models\\Post")
+
 }
